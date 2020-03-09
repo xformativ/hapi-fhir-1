@@ -24,10 +24,11 @@ import org.hl7.fhir.r4.terminologies.ValueSetExpander;
 import org.hl7.fhir.r4.terminologies.ValueSetExpanderFactory;
 import org.hl7.fhir.r4.terminologies.ValueSetExpanderSimple;
 import org.hl7.fhir.r4.utils.IResourceValidator;
-import org.hl7.fhir.utilities.TerminologyServiceOptions;
 import org.hl7.fhir.utilities.TranslationServices;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
+import org.hl7.fhir.utilities.validation.ValidationOptions;
 
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -39,6 +40,8 @@ public final class HapiWorkerContext implements IWorkerContext, ValueSetExpander
   private IValidationSupport myValidationSupport;
   private Parameters myExpansionProfile;
   private String myOverrideVersionNs;
+  private Locale locale;
+  private ResourceBundle i18Nmessages;
 
   public HapiWorkerContext(FhirContext theCtx, IValidationSupport theValidationSupport) {
     Validate.notNull(theCtx, "theCtx must not be null");
@@ -152,7 +155,7 @@ public final class HapiWorkerContext implements IWorkerContext, ValueSetExpander
   }
 
   @Override
-  public ValidationResult validateCode(TerminologyServiceOptions theOptions, CodeableConcept theCode, ValueSet theVs) {
+  public ValidationResult validateCode(ValidationOptions theOptions, CodeableConcept theCode, ValueSet theVs) {
     for (Coding next : theCode.getCoding()) {
       ValidationResult retVal = validateCode(theOptions, next, theVs);
       if (retVal.isOk()) {
@@ -164,7 +167,7 @@ public final class HapiWorkerContext implements IWorkerContext, ValueSetExpander
   }
 
   @Override
-  public ValidationResult validateCode(TerminologyServiceOptions theOptions, Coding theCode, ValueSet theVs) {
+  public ValidationResult validateCode(ValidationOptions theOptions, Coding theCode, ValueSet theVs) {
     String system = theCode.getSystem();
     String code = theCode.getCode();
     String display = theCode.getDisplay();
@@ -172,7 +175,7 @@ public final class HapiWorkerContext implements IWorkerContext, ValueSetExpander
   }
 
   @Override
-  public ValidationResult validateCode(TerminologyServiceOptions theOptions, String theSystem, String theCode, String theDisplay) {
+  public ValidationResult validateCode(ValidationOptions theOptions, String theSystem, String theCode, String theDisplay) {
     IContextValidationSupport.CodeValidationResult result = myValidationSupport.validateCode(myCtx, theSystem, theCode, theDisplay, (String)null);
     if (result == null) {
       return null;
@@ -181,13 +184,13 @@ public final class HapiWorkerContext implements IWorkerContext, ValueSetExpander
   }
 
   @Override
-  public ValidationResult validateCode(TerminologyServiceOptions theOptions, String theSystem, String theCode, String theDisplay, ConceptSetComponent theVsi) {
+  public ValidationResult validateCode(ValidationOptions theOptions, String theSystem, String theCode, String theDisplay, ConceptSetComponent theVsi) {
     throw new UnsupportedOperationException();
   }
 
 
   @Override
-  public ValidationResult validateCode(TerminologyServiceOptions theOptions, String theSystem, String theCode, String theDisplay, ValueSet theVs) {
+  public ValidationResult validateCode(ValidationOptions theOptions, String theSystem, String theCode, String theDisplay, ValueSet theVs) {
 
     /*
      * The following valueset is a special case, since the BCP codesystem is very difficult to expand
@@ -227,7 +230,7 @@ public final class HapiWorkerContext implements IWorkerContext, ValueSetExpander
   }
 
   @Override
-  public ValidationResult validateCode(TerminologyServiceOptions theOptions, String code, ValueSet vs) {
+  public ValidationResult validateCode(ValidationOptions theOptions, String code, ValueSet vs) {
     return validateCode(theOptions, Constants.CODESYSTEM_VALIDATE_NOT_NEEDED, code, null, vs);
   }
 
@@ -283,6 +286,39 @@ public final class HapiWorkerContext implements IWorkerContext, ValueSetExpander
   @Override
   public ValueSetExpansionOutcome expandVS(ConceptSetComponent theInc, boolean theHeiarchical) throws TerminologyServiceException {
     return myValidationSupport.expandValueSet(myCtx, theInc);
+  }
+
+  @Override
+  public Locale getLocale() {
+    if (Objects.nonNull(locale)){
+      return locale;
+    } else {
+      return Locale.US;
+    }
+  }
+
+  @Override
+  public void setLocale(Locale locale) {
+    this.locale = locale;
+    setValidationMessageLanguage(getLocale());
+  }
+
+  @Override
+  public String formatMessage(String theMessage, Object... theMessageArguments) {
+    String message;
+    if (theMessageArguments != null && theMessageArguments.length > 0) {
+      message = MessageFormat.format(i18Nmessages.getString(theMessage), theMessageArguments);
+    } else if (i18Nmessages.containsKey(theMessage)) {
+      message = i18Nmessages.getString(theMessage);
+    } else {
+      message = theMessage;
+    }
+    return message;
+  }
+
+  @Override
+  public void setValidationMessageLanguage(Locale locale) {
+    i18Nmessages = ResourceBundle.getBundle("Messages", locale );
   }
 
   @Override

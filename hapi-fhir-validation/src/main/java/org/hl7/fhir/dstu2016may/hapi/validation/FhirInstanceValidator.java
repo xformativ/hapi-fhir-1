@@ -45,13 +45,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class FhirInstanceValidator extends BaseValidatorBridge implements IValidatorModule {
@@ -494,8 +488,23 @@ public class FhirInstanceValidator extends BaseValidatorBridge implements IValid
 		}
 
 		@Override
-		public ValidationResult validateCode(ValidationOptions options, String system, String code, String display) {
-			return null;
+		public Locale getLocale() {
+			return myWrap.getLocale();
+		}
+
+		@Override
+		public void setLocale(Locale locale) {
+			myWrap.setLocale(locale);
+		}
+
+		@Override
+		public String formatMessage(String s, Object... objects) {
+			return myWrap.formatMessage(s, objects);
+		}
+
+		@Override
+		public void setValidationMessageLanguage(Locale locale) {
+			myWrap.setValidationMessageLanguage(locale);
 		}
 
 		@Override
@@ -705,6 +714,12 @@ public class FhirInstanceValidator extends BaseValidatorBridge implements IValid
 			}
 
 			org.hl7.fhir.dstu2016may.utils.IWorkerContext.ValidationResult result = myWrap.validateCode(Constants.CODESYSTEM_VALIDATE_NOT_NEEDED, code, null, convertedVs);
+			return convertValidationResult(result);
+		}
+
+		@Override
+		public ValidationResult validateCode(ValidationOptions validationOptions,String system, String code, String display) {
+			org.hl7.fhir.dstu2016may.utils.IWorkerContext.ValidationResult result = myWrap.validateCode(system, code, display);
 			return convertValidationResult(result);
 		}
 

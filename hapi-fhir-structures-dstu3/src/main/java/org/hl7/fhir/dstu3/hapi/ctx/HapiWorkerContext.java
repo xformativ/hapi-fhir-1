@@ -25,6 +25,7 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.TerminologyServiceException;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -36,6 +37,8 @@ public final class HapiWorkerContext implements IWorkerContext, ValueSetExpander
 
   private IValidationSupport myValidationSupport;
   private ExpansionProfile myExpansionProfile;
+  private ResourceBundle i18Nmessages;
+  private Locale locale;
 
   public HapiWorkerContext(FhirContext theCtx, IValidationSupport theValidationSupport) {
     Validate.notNull(theCtx, "theCtx must not be null");
@@ -88,6 +91,39 @@ public final class HapiWorkerContext implements IWorkerContext, ValueSetExpander
   @Override
   public ValueSetExpansionComponent expandVS(ConceptSetComponent theInc, boolean theHeiarchical) {
     return myValidationSupport.expandValueSet(myCtx, theInc);
+  }
+
+  @Override
+  public Locale getLocale() {
+    if (Objects.nonNull(locale)){
+      return locale;
+    } else {
+      return Locale.US;
+    }
+  }
+
+  @Override
+  public void setLocale(Locale locale) {
+    this.locale = locale;
+    setValidationMessageLanguage(getLocale());
+  }
+
+  @Override
+  public String formatMessage(String theMessage, Object... theMessageArguments) {
+    String message;
+    if (theMessageArguments != null && theMessageArguments.length > 0) {
+      message = MessageFormat.format(i18Nmessages.getString(theMessage), theMessageArguments);
+    } else if (i18Nmessages.containsKey(theMessage)) {
+      message = i18Nmessages.getString(theMessage);
+    } else {
+      message = theMessage;
+    }
+    return message;
+  }
+
+  @Override
+  public void setValidationMessageLanguage(Locale locale) {
+    i18Nmessages = ResourceBundle.getBundle("Messages", locale );
   }
 
   @Override

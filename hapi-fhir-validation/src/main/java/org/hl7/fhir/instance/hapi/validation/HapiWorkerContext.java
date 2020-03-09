@@ -20,13 +20,19 @@ import org.hl7.fhir.dstu2.utils.IWorkerContext;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.ResourceBundle;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public final class HapiWorkerContext implements IWorkerContext, ValueSetExpanderFactory, ValueSetExpander {
 	private final FhirContext myCtx;
 	private IValidationSupport myValidationSupport;
+	private Locale locale;
+	private ResourceBundle i18Nmessages;
 
 	public HapiWorkerContext(FhirContext theCtx, IValidationSupport theValidationSupport) {
 		myCtx = theCtx;
@@ -57,6 +63,39 @@ public final class HapiWorkerContext implements IWorkerContext, ValueSetExpander
 	@Override
 	public ValueSetExpansionComponent expandVS(ConceptSetComponent theInc) {
 		return myValidationSupport.expandValueSet(myCtx, theInc);
+	}
+
+	@Override
+	public Locale getLocale() {
+		if (Objects.nonNull(locale)){
+			return locale;
+		} else {
+			return Locale.US;
+		}
+	}
+
+	@Override
+	public void setLocale(Locale locale) {
+		this.locale = locale;
+		setValidationMessageLanguage(getLocale());
+	}
+
+	@Override
+	public String formatMessage(String theMessage, Object... theMessageArguments) {
+		String message;
+		if (theMessageArguments != null && theMessageArguments.length > 0) {
+			message = MessageFormat.format(i18Nmessages.getString(theMessage), theMessageArguments);
+		} else if (i18Nmessages.containsKey(theMessage)) {
+			message = i18Nmessages.getString(theMessage);
+		} else {
+			message = theMessage;
+		}
+		return message;
+	}
+
+	@Override
+	public void setValidationMessageLanguage(Locale locale) {
+		i18Nmessages = ResourceBundle.getBundle("Messages", locale );
 	}
 
 	@Override

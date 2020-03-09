@@ -48,13 +48,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.hl7.fhir.convertors.conv30_50.CodeSystem30_50.convertCodeSystem;
@@ -517,6 +511,26 @@ public class FhirInstanceValidator extends BaseValidatorBridge implements IInsta
 			ValueSetExpander.ValueSetExpansionOutcome outcome = new ValueSetExpander.ValueSetExpansionOutcome(new org.hl7.fhir.r5.model.ValueSet());
 			outcome.getValueset().setExpansion(valueSetExpansionComponent);
 			return outcome;
+		}
+
+		@Override
+		public Locale getLocale() {
+			return myWrap.getLocale();
+		}
+
+		@Override
+		public void setLocale(Locale locale) {
+			myWrap.setLocale(locale);
+		}
+
+		@Override
+		public String formatMessage(String s, Object... objects) {
+			return myWrap.formatMessage(s, objects);
+		}
+
+		@Override
+		public void setValidationMessageLanguage(Locale locale) {
+			myWrap.setValidationMessageLanguage(locale);
 		}
 
 		@Override

@@ -48,11 +48,11 @@ import org.hl7.fhir.r5.utils.INarrativeGenerator;
 import org.hl7.fhir.r5.utils.IResourceValidator;
 import org.hl7.fhir.r5.utils.IResourceValidator.BestPracticeWarningLevel;
 import org.hl7.fhir.r5.utils.IResourceValidator.IdStatus;
-import org.hl7.fhir.r5.validation.InstanceValidator;
 import org.hl7.fhir.utilities.TranslationServices;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationOptions;
+import org.hl7.fhir.validation.instance.InstanceValidator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -62,12 +62,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -679,6 +674,26 @@ public class FhirInstanceValidator extends BaseValidatorBridge implements IInsta
 			ValueSetExpander.ValueSetExpansionOutcome outcome = new ValueSetExpander.ValueSetExpansionOutcome(new org.hl7.fhir.r5.model.ValueSet());
 			outcome.getValueset().setExpansion(valueSetExpansionComponent);
 			return outcome;
+		}
+
+		@Override
+		public Locale getLocale() {
+			return myWrap.getLocale();
+		}
+
+		@Override
+		public void setLocale(Locale locale) {
+			myWrap.setLocale(locale);
+		}
+
+		@Override
+		public String formatMessage(String s, Object... objects) {
+			return myWrap.formatMessage(s, objects);
+		}
+
+		@Override
+		public void setValidationMessageLanguage(Locale locale) {
+			myWrap.setValidationMessageLanguage(locale);
 		}
 
 		@Override

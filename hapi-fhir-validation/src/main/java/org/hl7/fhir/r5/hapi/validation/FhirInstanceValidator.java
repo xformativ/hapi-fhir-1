@@ -36,13 +36,7 @@ import org.hl7.fhir.utilities.validation.ValidationOptions;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings({"PackageAccessibility", "Duplicates"})
@@ -440,6 +434,26 @@ public class FhirInstanceValidator extends org.hl7.fhir.r5.hapi.validation.BaseV
 
 			ValueSetExpansionOutcome outcome = new ValueSetExpansionOutcome(valueSetExpansion);
 			return outcome;
+		}
+
+		@Override
+		public Locale getLocale() {
+			return myWrap.getLocale();
+		}
+
+		@Override
+		public void setLocale(Locale locale) {
+			myWrap.setLocale(locale);
+		}
+
+		@Override
+		public String formatMessage(String s, Object... objects) {
+			return myWrap.formatMessage(s, objects);
+		}
+
+		@Override
+		public void setValidationMessageLanguage(Locale locale) {
+			myWrap.setValidationMessageLanguage(locale);
 		}
 
 		@Override
