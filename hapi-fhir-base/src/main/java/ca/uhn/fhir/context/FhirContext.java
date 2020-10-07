@@ -733,7 +733,9 @@ public class FhirContext {
 	 * without incurring any performance penalty
 	 * </p>
 	 *
+	 * @deprecated THIS FEATURE IS NOT YET COMPLETE
 	 */
+	@Deprecated
 	public IParser newRDFParser() {
 		return new RDFParser(this, myParserErrorHandler, Lang.TURTLE);
 	}
