@@ -82,21 +82,37 @@ public class LoincRsnaPlaybookHandler extends BaseLoincHandler implements IRecor
 		String rpid = trim(theRecord.get("RPID"));
 		String longName = trim(theRecord.get("LongName"));
 
+		// CodeSystem version from properties file
+		String codeSystemVersionId = myUploadProperties.getProperty(LOINC_CODESYSTEM_VERSION.getCode());
+
 		// ConceptMap version from properties files
-		String loincRsnaCmVersion = myUploadProperties.getProperty(LOINC_CONCEPTMAP_VERSION.getCode());
-		
+		String loincRsnaCmVersion;
+		if (codeSystemVersionId != null) {
+			loincRsnaCmVersion = myUploadProperties.getProperty(LOINC_CONCEPTMAP_VERSION.getCode()) + "-" + codeSystemVersionId;
+		} else {
+			loincRsnaCmVersion = myUploadProperties.getProperty(LOINC_CONCEPTMAP_VERSION.getCode());
+		}
+
+
 		// RSNA Codes VS
 		ValueSet vs;
-		if (!myIdToValueSet.containsKey(RSNA_CODES_VS_ID)) {
+		String rsnaCodesValueSetId;
+		if (codeSystemVersionId != null) {
+			rsnaCodesValueSetId = RSNA_CODES_VS_ID + "-" + codeSystemVersionId;
+		} else {
+			rsnaCodesValueSetId = RSNA_CODES_VS_ID;
+		}
+		if (!myIdToValueSet.containsKey(rsnaCodesValueSetId)) {
 			vs = new ValueSet();
 			vs.setUrl(RSNA_CODES_VS_URI);
-			vs.setId(RSNA_CODES_VS_ID);
+			vs.setId(rsnaCodesValueSetId);
 			vs.setName(RSNA_CODES_VS_NAME);
 			vs.setStatus(Enumerations.PublicationStatus.ACTIVE);
-			myIdToValueSet.put(RSNA_CODES_VS_ID, vs);
+			vs.setVersion(codeSystemVersionId);
+			myIdToValueSet.put(rsnaCodesValueSetId, vs);
 			myValueSets.add(vs);
 		} else {
-			vs = myIdToValueSet.get(RSNA_CODES_VS_ID);
+			vs = myIdToValueSet.get(rsnaCodesValueSetId);
 		}
 
 		if (!myCodesInRsnaPlaybookValueSet.contains(loincNumber)) {
@@ -177,7 +193,6 @@ public class LoincRsnaPlaybookHandler extends BaseLoincHandler implements IRecor
 
 		String partConceptMapId;
 		String termConceptMapId;
-		String codeSystemVersionId = myUploadProperties.getProperty(LOINC_CODESYSTEM_VERSION.getCode());
 		if (codeSystemVersionId != null) {
 			partConceptMapId = LoincPartRelatedCodeMappingHandler.LOINC_PART_TO_RID_PART_MAP_ID + "-" + codeSystemVersionId;
 			termConceptMapId = LoincPartRelatedCodeMappingHandler.LOINC_TERM_TO_RPID_PART_MAP_ID + "-" + codeSystemVersionId;
@@ -195,6 +210,7 @@ public class LoincRsnaPlaybookHandler extends BaseLoincHandler implements IRecor
 					.setConceptMapVersion(loincRsnaCmVersion)
 					.setConceptMapName(LoincPartRelatedCodeMappingHandler.LOINC_PART_TO_RID_PART_MAP_NAME)
 					.setSourceCodeSystem(ITermLoaderSvc.LOINC_URI)
+					.setSourceCodeSystemVersion(codeSystemVersionId)
 					.setSourceCode(partNumber)
 					.setSourceDisplay(partName)
 					.setTargetCodeSystem(RID_CS_URI)
@@ -213,6 +229,7 @@ public class LoincRsnaPlaybookHandler extends BaseLoincHandler implements IRecor
 					.setConceptMapVersion(loincRsnaCmVersion)
 					.setConceptMapName(LoincPartRelatedCodeMappingHandler.LOINC_TERM_TO_RPID_PART_MAP_NAME)
 					.setSourceCodeSystem(ITermLoaderSvc.LOINC_URI)
+					.setSourceCodeSystemVersion(codeSystemVersionId)
 					.setSourceCode(loincNumber)
 					.setSourceDisplay(longCommonName)
 					.setTargetCodeSystem(RPID_CS_URI)

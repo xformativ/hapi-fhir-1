@@ -149,7 +149,7 @@ public final class ResourceIndexedSearchParams {
 		return myPopulatedResourceLinkParameters;
 	}
 
-	public boolean matchParam(ModelConfig theModelConfig, String theResourceName, String theParamName, RuntimeSearchParam theParamDef, IQueryParameterType theParam, boolean theUseOrdinalDatesForDayComparison) {
+	public boolean matchParam(ModelConfig theModelConfig, String theResourceName, String theParamName, RuntimeSearchParam theParamDef, IQueryParameterType theParam) {
 		if (theParamDef == null) {
 			return false;
 		}
@@ -186,7 +186,7 @@ public final class ResourceIndexedSearchParams {
 		}
 		Predicate<BaseResourceIndexedSearchParam> namedParamPredicate = param ->
 			param.getParamName().equalsIgnoreCase(theParamName) &&
-				param.matches(theParam, theUseOrdinalDatesForDayComparison);
+				param.matches(theParam);
 
 		return resourceParams.stream().anyMatch(namedParamPredicate);
 	}
@@ -265,6 +265,7 @@ public final class ResourceIndexedSearchParams {
 		findMissingSearchParams(thePartitionSettings, theModelConfig, theEntity, theActiveSearchParams, RestSearchParameterTypeEnum.DATE, myDateParams);
 		findMissingSearchParams(thePartitionSettings, theModelConfig, theEntity, theActiveSearchParams, RestSearchParameterTypeEnum.URI, myUriParams);
 		findMissingSearchParams(thePartitionSettings, theModelConfig, theEntity, theActiveSearchParams, RestSearchParameterTypeEnum.TOKEN, myTokenParams);
+		findMissingSearchParams(thePartitionSettings, theModelConfig, theEntity, theActiveSearchParams, RestSearchParameterTypeEnum.SPECIAL, myCoordsParams);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -303,10 +304,16 @@ public final class ResourceIndexedSearchParams {
 						case URI:
 							param = new ResourceIndexedSearchParamUri();
 							break;
+						case SPECIAL:
+							if (BaseSearchParamExtractor.COORDS_INDEX_PATHS.contains(nextEntry.getValue().getPath())) {
+								param = new ResourceIndexedSearchParamCoords();
+								break;
+							} else {
+								continue;
+							}
 						case COMPOSITE:
 						case HAS:
 						case REFERENCE:
-						case SPECIAL:
 						default:
 							continue;
 					}

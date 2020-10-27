@@ -40,6 +40,7 @@ import ca.uhn.fhir.rest.api.server.IPreResourceShowDetails;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.api.server.SimplePreResourceAccessDetails;
 import ca.uhn.fhir.rest.api.server.SimplePreResourceShowDetails;
+import ca.uhn.fhir.rest.api.server.storage.TransactionDetails;
 import ca.uhn.fhir.rest.param.ParameterUtil;
 import ca.uhn.fhir.rest.param.QualifierDetails;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
@@ -64,11 +65,11 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import static ca.uhn.fhir.jpa.dao.BaseHapiFhirDao.OO_SEVERITY_ERROR;
 import static ca.uhn.fhir.jpa.dao.BaseHapiFhirDao.OO_SEVERITY_INFO;
@@ -184,8 +185,12 @@ public abstract class BaseStorageDao {
 		return outcome;
 	}
 
-	protected void doCallHooks(RequestDetails theRequestDetails, Pointcut thePointcut, HookParams theParams) {
-		JpaInterceptorBroadcaster.doCallHooks(getInterceptorBroadcaster(), theRequestDetails, thePointcut, theParams);
+	protected void doCallHooks(TransactionDetails theTransactionDetails, RequestDetails theRequestDetails, Pointcut thePointcut, HookParams theParams) {
+		if (theTransactionDetails.isAcceptingDeferredInterceptorBroadcasts(thePointcut)) {
+			theTransactionDetails.addDeferredInterceptorBroadcast(thePointcut, theParams);
+		} else {
+			JpaInterceptorBroadcaster.doCallHooks(getInterceptorBroadcaster(), theRequestDetails, thePointcut, theParams);
+		}
 	}
 
 	protected abstract IInterceptorBroadcaster getInterceptorBroadcaster();
@@ -243,7 +248,8 @@ public abstract class BaseStorageDao {
 			QualifierDetails qualifiedParamName = QualifierDetails.extractQualifiersFromParameterName(nextParamName);
 			RuntimeSearchParam param = searchParams.get(qualifiedParamName.getParamName());
 			if (param == null) {
-				String msg = getContext().getLocalizer().getMessageSanitized(BaseHapiFhirResourceDao.class, "invalidSearchParameter", qualifiedParamName.getParamName(), new TreeSet<>(searchParams.keySet()));
+				Collection<String> validNames = mySearchParamRegistry.getValidSearchParameterNamesIncludingMeta(getResourceName());
+				String msg = getContext().getLocalizer().getMessageSanitized(BaseHapiFhirResourceDao.class, "invalidSearchParameter", qualifiedParamName.getParamName(), getResourceName(), validNames);
 				throw new InvalidRequestException(msg);
 			}
 
